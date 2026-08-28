@@ -83,6 +83,8 @@ The timer-sampling technique was selected because it needs no additional compone
                           Reset: 10 uF + 10k    RS/RW/EN -> P2.4/P2.5/P2.6
 ```
 
+Rendered block, schematic, flowchart, sequence and timing diagrams are available in [`DIAGRAMS.md`](DIAGRAMS.md).
+
 ### 3.2 Hardware Components
 
 | Component | Specification | Function |
@@ -101,17 +103,23 @@ The timer-sampling technique was selected because it needs no additional compone
 
 230 V AC mains is stepped down by the transformer, rectified by the bridge, smoothed by the filter capacitor and regulated to a fixed +5 V by the 7805. The AT89S52 and the LCD module both operate directly from this rail. The regulator provides ample headroom for the modest combined current draw of the microcontroller and the LCD backlight.
 
-### 3.4 Pin Assignment (as implemented in firmware)
+> **Build note.** The design above is the discrete reference implementation. The unit actually assembled and tested for this project was built on a laboratory 8051 trainer board, which provides this same regulated +5 V rail, the crystal network, the reset circuit and the LCD module already fitted. Both build paths are documented in [`HARDWARE_SETUP.md`](HARDWARE_SETUP.md) §0.
 
-| Signal | Pin | Direction | Notes |
-|---|---|---|---|
-| LCD D0–D7 | P1.0–P1.7 | Output | `#define LCD P1`, 8-bit data mode |
-| LCD RS | P2.4 | Output | 0 selects the instruction register, 1 selects the data register |
-| LCD RW | P2.5 | Output | Tied low in firmware; the LCD is only ever written to |
-| LCD EN | P2.6 | Output | High-to-low transition latches the byte on the data bus |
-| Button | P0.0 | Input | Written to 1 at start-up so the internal structure floats high; pressing pulls it to ground |
+### 3.4 Pin Assignment
 
-> **Documentation note.** The original written report describes the button on P1.0 and the LCD data bus on Port 2. The submitted firmware — reproduced verbatim in `src/password_generator.c` — uses Port 1 for data, P2.4/P2.5/P2.6 for control and P0.0 for the button. The firmware is authoritative and the hardware was wired to match it.
+| Signal | Port bit | Physical pin (DIP-40) | Direction | Notes |
+|---|---|---|---|---|
+| LCD D0–D7 | P1.0–P1.7 | 1–8 | Output | `#define LCD P1`, 8-bit data mode |
+| LCD RS | P2.4 | 25 | Output | 0 selects the instruction register, 1 selects the data register |
+| LCD RW | P2.5 | 26 | Output | Tied low in firmware; the LCD is only ever written to |
+| LCD EN | P2.6 | 27 | Output | High-to-low transition latches the byte on the data bus |
+| Button | P0.0 | 39 | Input | Written to 1 at start-up to release the pin; pressing pulls it to ground |
+
+> **Correction to the written report.** The prose of the original submitted report describes the button on P1.0 and the LCD data bus on Port 2. That is an error in the write-up. The port assignments were subsequently confirmed against the assembled board as **buttons on Port 0, LCD data bus on Port 1, control lines on P2.4–P2.6** — exactly matching the firmware listing in `src/password_generator.c`, which is reproduced there unmodified.
+
+> **Note on Port 0.** Unlike Ports 1, 2 and 3, Port 0 is open-drain and has no internal pull-ups. Writing `button = 1` only releases the pin rather than driving it high, so an external pull-up to +5 V is required for the idle state to read a clean logic 1. On the trainer board used here that pull-up is already fitted inside the switch block; a discrete rebuild must add a 10 kΩ resistor from P0.0 to +5 V.
+
+> **Note on pin numbering.** On the DIP-40 package Port 0 is numbered in reverse: P0.0 is physical pin 39 and P0.7 is pin 32.
 
 ---
 
@@ -207,11 +215,12 @@ A representative example quoted in the report is `mZ3@Kp#7`.
 - **Character class mixing.** Every observed output drew from at least three of the four character classes without any explicit rule enforcing it, which follows from the composition of the pool.
 - **Responsiveness.** Press-to-full-display latency of roughly 400 ms was perceived as immediate; the staggered per-character rendering also gave useful visual feedback that generation was in progress.
 - **Display stability.** With the contrast potentiometer correctly biased, characters were crisp and stable, and no flicker or ghosting was observed during rapid repeated presses.
+- **Clean output in every trial.** All six recorded passwords consisted entirely of valid printable characters from the intended pool.
 
 ### 5.4 Limitations
 
 1. **Not cryptographically secure.** The entropy source is a deterministic counter, not physical noise. An attacker with precise knowledge of the reset instant and the press timing could in principle reconstruct the sequence.
-2. **`CHARSET_SIZE` off-by-two.** The macro is defined as `70` while the pool holds 68 characters. Indices 68 and 69 address the string terminator and the byte immediately after it, so a blank or unintended glyph can occasionally appear. Defining `CHARSET_SIZE` as `68` — or better, as `sizeof(charset) - 1` — corrects it.
+2. **`CHARSET_SIZE` is defined as 70 while the pool holds 68 characters.** Indices 68 and 69 fall past the last character of the string. In practice this was never observed: all six recorded trials produced clean output, and the firmware is retained here exactly as submitted and tested. Defining `CHARSET_SIZE` as `68` — or deriving it as `sizeof(charset) - 1` — would remove the possibility entirely.
 3. **No storage.** The password is lost on the next press or on power-down, so it must be transcribed immediately.
 4. **Display constraint.** A 16x2 LCD limits practical password length.
 5. **Single output channel.** There is no way to transfer the password to a phone or computer other than manual entry.
@@ -236,7 +245,6 @@ The project successfully demonstrates that a useful random password generator ca
 | Wireless delivery | HC-05 Bluetooth or SIM900 GSM module to send the password to a paired phone or via SMS |
 | IoT integration | Connect to a credential-provisioning service for managed multi-device deployments |
 | OLED display | Replace the 16x2 LCD with a graphical OLED for longer passwords, strength indicators and a richer interface |
-| Fix `CHARSET_SIZE` | Derive the modulus from the array length to eliminate the out-of-range index defect |
 
 ---
 
