@@ -61,6 +61,8 @@ flowchart LR
 
 ## 🧰 Hardware Used
 
+This project was assembled on a **college 8051 trainer board**, which supplies the crystal, reset circuit, regulated +5 V rail, onboard LCD and pre-wired switch blocks. The table below lists the equivalent discrete parts for anyone rebuilding it from scratch — both build paths are documented in [`docs/HARDWARE_SETUP.md`](docs/HARDWARE_SETUP.md) §0.
+
 | Component | Specification | Purpose |
 |---|---|---|
 | Microcontroller | AT89S52 (8051 core, 8 KB flash) | Runs the firmware |
@@ -73,7 +75,7 @@ flowchart LR
 
 ## 🔌 Pin Mapping
 
-As implemented in [`src/password_generator.c`](src/password_generator.c):
+As implemented in [`src/password_generator.c`](src/password_generator.c) and **verified against the assembled board**:
 
 | Signal | Port pin | Physical pin (DIP-40) | Notes |
 |---|---|---|---|
@@ -81,9 +83,11 @@ As implemented in [`src/password_generator.c`](src/password_generator.c):
 | LCD `RS` (register select) | **P2.4** | 25 | 0 = command, 1 = data |
 | LCD `RW` (read/write) | **P2.5** | 26 | Held at 0 (write only) |
 | LCD `EN` (enable) | **P2.6** | 27 | High-low strobe latches each byte |
-| Push button | **P0.0** | 39 | Active low; needs an external 10 kΩ pull-up |
+| Push button | **P0.0** | 39 | Active low; needs a pull-up to +5 V |
 
 > Port 0 is numbered backwards on the DIP-40 package — **P0.0 is pin 39**, not pin 32.
+>
+> Port 0 also has no internal pull-ups, unlike Ports 1–3. On the trainer board used here the pull-up is already fitted inside the switch block; a discrete rebuild needs an external 10 kΩ from P0.0 to +5 V.
 
 Full wiring notes are in [`docs/HARDWARE_SETUP.md`](docs/HARDWARE_SETUP.md).
 
@@ -127,7 +131,7 @@ A step-by-step flowchart and a runtime sequence diagram are in [`docs/DIAGRAMS.m
 ├── docs/
 │   ├── PROJECT_REPORT.md        # Full academic report (Chapters 1–6)
 │   ├── DIAGRAMS.md              # Block, schematic, flowchart and timing diagrams
-│   ├── HARDWARE_SETUP.md        # Pin mapping, wiring and power supply notes
+│   ├── HARDWARE_SETUP.md        # Build paths, pin mapping, wiring, power supply
 │   └── images/                  # Hardware photos and LCD output captures
 ├── LICENSE
 └── README.md
@@ -152,7 +156,7 @@ Every press produced a distinct string containing a mix of character classes, an
 
 - **`CHARSET_SIZE` mismatch** — the firmware defines `CHARSET_SIZE` as `70`, but the alphabet string contains only **68** characters. Indices 68 and 69 therefore fall past the last character. All six recorded trials came out clean, so this does not affect normal operation in practice, but defining `CHARSET_SIZE` as `68` (or deriving it with `sizeof(charset) - 1`) removes the possibility entirely. The code is kept here exactly as submitted and tested.
 - **Not cryptographically secure** — the entropy comes from a deterministic free-running timer, not a hardware RNG. Suitable for demonstration and casual use, not for protecting real secrets.
-- **Documentation vs. code** — the written report describes the button on P1.0 and the LCD data bus on Port 2. The firmware in this repository is authoritative: **data bus on Port 1, control lines on P2.4–P2.6, button on P0.0**.
+- **The written report has the ports wrong** — the report prose claims the button is on P1.0 and the LCD data bus on Port 2. That is an error in the write-up. The assignments were checked against the assembled board and confirmed as **buttons on Port 0, LCD data bus on Port 1, control lines on P2.4–P2.6**, exactly matching the firmware.
 - **No persistence** — the password vanishes on the next press or on power-down; there is no EEPROM copy.
 - **Display limit** — a 16x2 LCD constrains practical password length.
 
