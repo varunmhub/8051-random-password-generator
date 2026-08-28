@@ -173,8 +173,8 @@ Every press produced a distinct string containing a mix of character classes, an
 
 | Name | Roll No. |
 |---|---|
-| M Mohit Srinivasa | 160123735040 |
-| Muppidi Varun | 160123735047 |
+| M Mohit Srinivasa |
+| Muppidi Varun | 
 
 **Supervisor:** N. Jagan Mohan Reddy, Assistant Professor, Dept. of ECE
 
