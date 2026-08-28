@@ -200,15 +200,6 @@ End-to-end response time from press to fully displayed password was approximatel
 - IoT integration for centralised credential provisioning
 - Upgrade to a graphical OLED for longer passwords and richer UI
 
-## 👥 Authors
-
-| Name | Roll number |
-|---|---|
-| Muppidi Varun | 160123735047 |
-| M Mohit Srinivasa | 160123735040 |
-
-**Supervisor:** N. Jagan Mohan Reddy, Assistant Professor, Dept. of ECE
-
 ## 📄 License
 
 Released under the [MIT License](LICENSE).
