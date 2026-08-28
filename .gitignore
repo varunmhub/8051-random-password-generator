@@ -1,0 +1,45 @@
+# ---- Keil uVision / C51 build artifacts ----
+*.hex
+*.HEX
+*.lst
+*.LST
+*.obj
+*.OBJ
+*.m51
+*.M51
+*.plg
+*.lnp
+*.bak
+*.__i
+*.i
+*.sbr
+*.scvd
+*.build_log.htm
+*.dep
+*.crf
+*.iex
+*.htm
+
+# Keil per-user GUI / settings files
+*.uvgui.*
+*.uvguix.*
+*.uvopt
+*.opt
+*.uvproj.saved_uv*
+*.uvoptx.bak
+
+# Keil output and listing folders
+Objects/
+Listings/
+Output/
+DebugConfig/
+RTE/
+
+# ---- Editors and OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
