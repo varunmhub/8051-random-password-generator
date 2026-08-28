@@ -171,8 +171,9 @@ Every press produced a distinct string containing a mix of character classes, an
 
 ## 👥 Authors
 
-| M Mohit Srinivasa |
 | Muppidi Varun | 
+
+| M Mohit Srinivasa |
 
 **Supervisor:** N. Jagan Mohan Reddy, Assistant Professor, Dept. of ECE
 
