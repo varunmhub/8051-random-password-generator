@@ -2,6 +2,8 @@
 
 Wiring reference for the 8051 random password generator. **These connections match the firmware in `src/password_generator.c`, which is the authoritative source.**
 
+📌 For pin-accurate ASCII schematics, a system block diagram, the firmware flowchart and strobe timing, see **[`DIAGRAMS.md`](DIAGRAMS.md)**.
+
 ---
 
 ## 1. Bill of Materials
@@ -18,7 +20,7 @@ Wiring reference for the 8051 random password generator. **These connections mat
 | 1 | Potentiometer | 10 kΩ (LCD contrast) |
 | 1 | Resistor | 220 Ω (LCD backlight current limit) |
 | 1 | Push button | Momentary, normally open |
-| 1 | Resistor | 10 kΩ (button pull-up, optional) |
+| 1 | Resistor | 10 kΩ (button pull-up — required, see §4) |
 | 1 | Transformer | 230 V AC → 12 V AC step-down |
 | 1 | Bridge rectifier | 1 A |
 | 1 | Electrolytic capacitor | 1000 µF, 25 V (filter) |
@@ -63,24 +65,24 @@ This produces an active-high reset pulse on power-up that decays as the capacito
 
 The LCD is driven in 8-bit mode with the full data bus on Port 1.
 
-| LCD pin | Name | Connect to |
-|---|---|---|
-| 1 | VSS | Ground |
-| 2 | VDD | +5 V |
-| 3 | VEE / V0 | Wiper of the 10 kΩ contrast potentiometer (ends to +5 V and ground) |
-| 4 | RS | **P2.4** |
-| 5 | RW | **P2.5** |
-| 6 | EN | **P2.6** |
-| 7 | D0 | **P1.0** |
-| 8 | D1 | **P1.1** |
-| 9 | D2 | **P1.2** |
-| 10 | D3 | **P1.3** |
-| 11 | D4 | **P1.4** |
-| 12 | D5 | **P1.5** |
-| 13 | D6 | **P1.6** |
-| 14 | D7 | **P1.7** |
-| 15 | LED+ | +5 V through the 220 Ω resistor |
-| 16 | LED− | Ground |
+| LCD pin | Name | Connect to | AT89S52 physical pin |
+|---|---|---|---|
+| 1 | VSS | Ground | — |
+| 2 | VDD | +5 V | — |
+| 3 | VEE / V0 | Wiper of the 10 kΩ contrast potentiometer (ends to +5 V and ground) | — |
+| 4 | RS | **P2.4** | 25 |
+| 5 | RW | **P2.5** | 26 |
+| 6 | EN | **P2.6** | 27 |
+| 7 | D0 | **P1.0** | 1 |
+| 8 | D1 | **P1.1** | 2 |
+| 9 | D2 | **P1.2** | 3 |
+| 10 | D3 | **P1.3** | 4 |
+| 11 | D4 | **P1.4** | 5 |
+| 12 | D5 | **P1.5** | 6 |
+| 13 | D6 | **P1.6** | 7 |
+| 14 | D7 | **P1.7** | 8 |
+| 15 | LED+ | +5 V through the 220 Ω resistor | — |
+| 16 | LED− | Ground | — |
 
 **Notes**
 
@@ -94,11 +96,13 @@ The LCD is driven in 8-bit mode with the full data bus on Port 1.
 
 | Node | Connection |
 |---|---|
-| Button terminal A | **P0.0** (pin 32) |
+| Button terminal A | **P0.0 — physical pin 39** |
 | Button terminal B | Ground |
 | Pull-up | 10 kΩ from P0.0 to +5 V |
 
-Port 0 is open-drain on the 8051 and has **no internal pull-ups**, so an external pull-up resistor on P0.0 is strongly recommended. The firmware writes `button = 1` at start-up to release the pin; pressing the button pulls it to ground and the firmware reads a logic 0. Debouncing is handled entirely in software (50 ms confirm-and-recheck), so no RC filter is required.
+> ⚠️ **Pin numbering.** On the 8051 DIP-40, Port 0 runs *backwards*: **P0.0 is pin 39** and P0.7 is pin 32. Wiring the button to pin 32 is a very common mistake.
+
+Port 0 is open-drain on the 8051 and has **no internal pull-ups**, so the external pull-up resistor on P0.0 is required, not optional. The firmware writes `button = 1` at start-up to release the pin; pressing the button pulls it to ground and the firmware reads a logic 0. Debouncing is handled entirely in software (50 ms confirm-and-recheck), so no RC filter is needed.
 
 ---
 
@@ -135,9 +139,9 @@ Port 0 is open-drain on the 8051 and has **no internal pull-ups**, so an externa
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | LCD completely blank | Contrast not biased, or VDD/VSS swapped | Adjust the potentiometer; verify pins 1 and 2 |
-| Solid black blocks on both rows | LCD powered but never initialised | Check RS/RW/EN on P2.4–P2.6 and the Port 1 data bus |
-| Garbled characters | Loose data-bus wire, or `EN` strobe too short | Reseat P1.0–P1.7; verify the crystal is oscillating |
-| Nothing happens on button press | Missing pull-up on P0.0, or button not grounded | Add the 10 kΩ pull-up; confirm the other terminal reaches ground |
+| Solid black blocks on both rows | LCD powered but never initialised | Check RS/RW/EN on P2.4–P2.6 (pins 25–27) and the Port 1 data bus |
+| Garbled characters | Loose data-bus wire, or `EN` strobe too short | Reseat P1.0–P1.7 (pins 1–8); verify the crystal is oscillating |
+| Nothing happens on button press | Missing pull-up on P0.0, wired to pin 32 instead of 39, or button not grounded | Add the 10 kΩ pull-up; move the wire to **pin 39**; confirm the other terminal reaches ground |
 | Multiple passwords from one press | Release wait skipped | Confirm the `while (button == 0);` loop and 200 ms delay are present |
-| Occasional blank character in the password | `CHARSET_SIZE` is 70 but the pool holds 68 characters | Change the macro to `68`, or use `sizeof(charset) - 1` |
+| Occasional blank character in the password | `CHARSET_SIZE` is 70 but the pool holds 68 characters | Optional: change the macro to `68`, or use `sizeof(charset) - 1` |
 | Program does not run at all | `EA/VPP` left floating or grounded | Tie pin 31 to +5 V |

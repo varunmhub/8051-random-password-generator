@@ -30,6 +30,35 @@ On power-up the LCD shows `Press Key`. Pressing the button clears the display an
 - **Fully offline** — nothing is transmitted, logged or written to non-volatile memory
 - **Low cost** — built entirely from standard lab components
 
+## 🗺️ System Block Diagram
+
+```mermaid
+flowchart LR
+    subgraph PSU["Power supply"]
+        direction TB
+        AC["230 V AC mains"] --> TX["Step-down transformer<br/>12 V AC"]
+        TX --> BR["Bridge rectifier"]
+        BR --> FC["1000 uF filter capacitor"]
+        FC --> REG["7805 regulator"]
+    end
+
+    subgraph CTRL["Controller"]
+        direction TB
+        XT["11.0592 MHz crystal<br/>2 x 33 pF"] --> U1["AT89S52<br/>8051 core"]
+        RSTN["Reset network<br/>10 uF + 10 k"] --> U1
+        TMR["Timer 0<br/>free-running 16-bit"] --> U1
+    end
+
+    BTN["Push button<br/>P0.0 active low"] --> U1
+    REG -->|"+5 V"| U1
+    REG -->|"+5 V"| DISP
+    U1 -->|"D0-D7 on Port 1"| DISP["16x2 LCD<br/>HD44780"]
+    U1 -->|"RS RW EN on P2.4-P2.6"| DISP
+    DISP --> OUT["8-character password"]
+```
+
+📐 **Full set of diagrams — pin-level schematic, LCD netlist, reset/crystal/button circuits, power supply chain, firmware flowchart, runtime sequence and LCD strobe timing — is in [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md).**
+
 ## 🧰 Hardware Used
 
 | Component | Specification | Purpose |
@@ -46,13 +75,15 @@ On power-up the LCD shows `Press Key`. Pressing the button clears the display an
 
 As implemented in [`src/password_generator.c`](src/password_generator.c):
 
-| Signal | 8051 Pin | Notes |
-|---|---|---|
-| LCD data bus D0–D7 | **Port 1 (P1.0–P1.7)** | 8-bit mode, `#define LCD P1` |
-| LCD `RS` (register select) | **P2.4** | 0 = command, 1 = data |
-| LCD `RW` (read/write) | **P2.5** | Held at 0 (write only) |
-| LCD `EN` (enable) | **P2.6** | High-low strobe latches each byte |
-| Push button | **P0.0** | Active low, initialised to 1 as input |
+| Signal | Port pin | Physical pin (DIP-40) | Notes |
+|---|---|---|---|
+| LCD data bus D0–D7 | **P1.0–P1.7** | 1–8 | 8-bit mode, `#define LCD P1` |
+| LCD `RS` (register select) | **P2.4** | 25 | 0 = command, 1 = data |
+| LCD `RW` (read/write) | **P2.5** | 26 | Held at 0 (write only) |
+| LCD `EN` (enable) | **P2.6** | 27 | High-low strobe latches each byte |
+| Push button | **P0.0** | 39 | Active low; needs an external 10 kΩ pull-up |
+
+> Port 0 is numbered backwards on the DIP-40 package — **P0.0 is pin 39**, not pin 32.
 
 Full wiring notes are in [`docs/HARDWARE_SETUP.md`](docs/HARDWARE_SETUP.md).
 
@@ -85,6 +116,8 @@ Full wiring notes are in [`docs/HARDWARE_SETUP.md`](docs/HARDWARE_SETUP.md).
 
 Because the timer runs continuously and free, the exact register value at the moment of a human key press is effectively unpredictable at the resolution the button can be pressed — which is what makes consecutive passwords differ.
 
+A step-by-step flowchart and a runtime sequence diagram are in [`docs/DIAGRAMS.md`](docs/DIAGRAMS.md).
+
 ## 📂 Repository Structure
 
 ```
@@ -93,6 +126,7 @@ Because the timer runs continuously and free, the exact register value at the mo
 │   └── password_generator.c     # Complete Embedded C firmware
 ├── docs/
 │   ├── PROJECT_REPORT.md        # Full academic report (Chapters 1–6)
+│   ├── DIAGRAMS.md              # Block, schematic, flowchart and timing diagrams
 │   ├── HARDWARE_SETUP.md        # Pin mapping, wiring and power supply notes
 │   └── images/                  # Hardware photos and LCD output captures
 ├── LICENSE
@@ -116,7 +150,7 @@ Every press produced a distinct string containing a mix of character classes, an
 
 ## ⚠️ Known Issues
 
-- **`CHARSET_SIZE` mismatch** — the firmware defines `CHARSET_SIZE` as `70`, but the alphabet string contains only **68** characters. Indices 68 and 69 therefore fall past the last character and read the terminating null plus one byte beyond it, which can occasionally place a blank/garbage glyph in the password. Setting `#define CHARSET_SIZE 68` (or deriving it with `sizeof(charset) - 1`) fixes this.
+- **`CHARSET_SIZE` mismatch** — the firmware defines `CHARSET_SIZE` as `70`, but the alphabet string contains only **68** characters. Indices 68 and 69 therefore fall past the last character. All six recorded trials came out clean, so this does not affect normal operation in practice, but defining `CHARSET_SIZE` as `68` (or deriving it with `sizeof(charset) - 1`) removes the possibility entirely. The code is kept here exactly as submitted and tested.
 - **Not cryptographically secure** — the entropy comes from a deterministic free-running timer, not a hardware RNG. Suitable for demonstration and casual use, not for protecting real secrets.
 - **Documentation vs. code** — the written report describes the button on P1.0 and the LCD data bus on Port 2. The firmware in this repository is authoritative: **data bus on Port 1, control lines on P2.4–P2.6, button on P0.0**.
 - **No persistence** — the password vanishes on the next press or on power-down; there is no EEPROM copy.
