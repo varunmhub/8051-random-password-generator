@@ -3,22 +3,54 @@
  *  Random Password Generator using 8051 Microcontroller with LCD Display
  * ============================================================================
  *
- *  Target      : AT89S52 (8051 family)
+ *  Target      : AT89S52 (8051 family), 40-pin DIP
  *  Clock       : 11.0592 MHz crystal
  *  Display     : 16x2 alphanumeric LCD (HD44780 compatible), 8-bit mode
  *  Toolchain   : Keil uVision / C51
  *
- *  Connections :
- *      LCD D0-D7  -> Port 1 (P1.0 - P1.7)
- *      LCD RS     -> P2.4
- *      LCD RW     -> P2.5
- *      LCD EN     -> P2.6
- *      Button     -> P0.0 (active low)
+ *  ---------------------------------------------------------------------------
+ *  CONNECTIONS
+ *  ---------------------------------------------------------------------------
+ *  The sbit / port names below are SFR bit references, not pin numbers. The
+ *  physical DIP-40 pin numbers are given here for wiring reference only; they
+ *  have no effect on compilation.
  *
- *  Operation   : The LCD idles with the prompt "Press Key". On a debounced
- *                button press, eight characters are drawn from a mixed
- *                alphabet using the live Timer 0 register values as the
- *                randomness source and printed to the LCD.
+ *    Function        Port bit        MCU pin (DIP-40)     LCD pin
+ *    --------        --------        ----------------     -------
+ *    LCD D0          P1.0            1                    7
+ *    LCD D1          P1.1            2                    8
+ *    LCD D2          P1.2            3                    9
+ *    LCD D3          P1.3            4                    10
+ *    LCD D4          P1.4            5                    11
+ *    LCD D5          P1.5            6                    12
+ *    LCD D6          P1.6            7                    13
+ *    LCD D7          P1.7            8                    14
+ *    LCD RS          P2.4            25                   4
+ *    LCD RW          P2.5            26                   5
+ *    LCD EN          P2.6            27                   6
+ *    Button          P0.0            39                   -
+ *
+ *    Support pins:  VCC = 40 (+5 V)    GND = 20
+ *                   EA  = 31 (tie to +5 V, else code will not execute)
+ *                   RST = 9  (10 uF to +5 V, 10 k to GND)
+ *                   XTAL1 = 19, XTAL2 = 18 (crystal + 2 x 33 pF to GND)
+ *
+ *  NOTE ON PORT 0 NUMBERING: on the DIP-40 package Port 0 is numbered in
+ *  reverse -- P0.0 is physical pin 39 and P0.7 is pin 32. The button belongs
+ *  on pin 39.
+ *
+ *  NOTE ON THE BUTTON PULL-UP: Port 0 is open-drain and has NO internal
+ *  pull-ups. Writing button = 1 below only releases the pin; an external
+ *  10k pull-up from P0.0 to +5 V is required for the idle state to read 1.
+ *  Ports 1 and 2 do have internal pull-ups, which is why the LCD bus needs
+ *  no external components.
+ *
+ *  ---------------------------------------------------------------------------
+ *  OPERATION
+ *  ---------------------------------------------------------------------------
+ *  The LCD idles with the prompt "Press Key". On a debounced button press,
+ *  eight characters are drawn from a mixed alphabet using the live Timer 0
+ *  register values as the randomness source and printed to the LCD.
  *
  *  Authors     : M Mohit Srinivasa (160123735040)
  *                Muppidi Varun     (160123735047)
@@ -26,21 +58,21 @@
  *  Institution : Chaitanya Bharathi Institute of Technology (A), Hyderabad
  *  Year        : 2025-2026
  *
- *  NOTE: CHARSET_SIZE is 70 as submitted, while the charset string below
- *        holds 68 characters. See the "Known Issues" section of README.md.
+ *  CHARSET_SIZE is 70 as submitted and tested, while the charset string below
+ *  holds 68 characters. Kept as-is; see "Known Issues" in README.md.
  * ============================================================================
  */
 
 #include <reg51.h>
 
-#define LCD          P1      /* LCD data bus on Port 1        */
-#define PASS_LEN     8       /* Number of characters generated */
-#define CHARSET_SIZE 70      /* Modulus used by get_random()   */
+#define LCD          P1      /* LCD data bus on Port 1, pins 1-8 */
+#define PASS_LEN     8       /* Number of characters generated    */
+#define CHARSET_SIZE 70      /* Modulus used by get_random()       */
 
-sbit RS     = P2 ^ 4;        /* Register select: 0 = cmd, 1 = data */
-sbit RW     = P2 ^ 5;        /* Read/Write: held low (write only)  */
-sbit EN     = P2 ^ 6;        /* Enable strobe                      */
-sbit button = P0 ^ 0;        /* Trigger button, active low         */
+sbit RS     = P2 ^ 4;        /* MCU pin 25 -> LCD pin 4: 0 = cmd, 1 = data */
+sbit RW     = P2 ^ 5;        /* MCU pin 26 -> LCD pin 5: held low (write)  */
+sbit EN     = P2 ^ 6;        /* MCU pin 27 -> LCD pin 6: enable strobe     */
+sbit button = P0 ^ 0;        /* MCU pin 39: trigger button, active low     */
 
 /* Character pool: 26 uppercase + 26 lowercase + 10 digits + 6 symbols */
 unsigned char code charset[] =
@@ -137,7 +169,7 @@ void main(void)
     lcd_init();
     timer0_init();
 
-    button = 1;                     /* configure P0.0 as input (weak high) */
+    button = 1;                     /* release P0.0 (needs external pull-up) */
 
     lcd_cmd(0x80);                  /* cursor to line 1, position 0 */
     lcd_string("Press Key");
