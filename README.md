@@ -21,6 +21,10 @@ Passwords chosen by humans are predictable. This project moves password creation
 
 On power-up the LCD shows `Press Key`. Pressing the button clears the display and prints 8 characters, one at a time, drawn from a 68-character alphabet of uppercase letters, lowercase letters, digits and symbols.
 
+<p align="center">
+  <img src="docs/images/output-password-1.jpeg" width="460" alt="16x2 LCD displaying a generated 8-character password">
+</p>
+
 ## ✨ Features
 
 - **8-character passwords** from a mixed alphabet (A–Z, a–z, 0–9, `@#$%&*`)
@@ -132,14 +136,26 @@ A step-by-step flowchart and a runtime sequence diagram are in [`docs/DIAGRAMS.m
 │   ├── PROJECT_REPORT.md        # Full academic report (Chapters 1–6)
 │   ├── DIAGRAMS.md              # Block, schematic, flowchart and timing diagrams
 │   ├── HARDWARE_SETUP.md        # Build paths, pin mapping, wiring, power supply
-│   └── images/                  # Hardware photos and LCD output captures
+│   └── images/                  # LCD output photographs
 ├── LICENSE
 └── README.md
 ```
 
 ## 🖥️ Output Results
 
-The display shows `Press Key` while idle. Each button press produces a new 8-character password. Passwords actually captured from the assembled board during testing:
+All photographs in this section are captures taken from the assembled trainer board during testing.
+
+### Idle state
+
+<p align="center">
+  <img src="docs/images/output-idle.jpeg" width="460" alt="16x2 LCD displaying the Press Key idle prompt">
+</p>
+
+After `lcd_init()` completes, the display holds the `Press Key` prompt while `main()` polls P0.0 waiting for a press.
+
+### Generated passwords
+
+Six button presses were recorded. Each produced a distinct 8-character string containing a mix of character classes:
 
 | # | Generated password |
 |---|---|
@@ -150,7 +166,22 @@ The display shows `Press Key` while idle. Each button press produces a new 8-cha
 | 5 | `MoWD3kRE` |
 | 6 | `UB1iQ*we` |
 
-Every press produced a distinct string containing a mix of character classes, and end-to-end response time from press to full display was approximately **400 ms**. Photographs of the board and of these LCD readings belong in [`docs/images/`](docs/images/).
+The six LCD captures from those trials:
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/output-password-1.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 1</sub></td>
+    <td align="center"><img src="docs/images/output-password-2.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 2</sub></td>
+    <td align="center"><img src="docs/images/output-password-3.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 3</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/output-password-4.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 4</sub></td>
+    <td align="center"><img src="docs/images/output-password-5.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 5</sub></td>
+    <td align="center"><img src="docs/images/output-password-6.jpeg" width="260" alt="LCD showing a generated password"><br/><sub>Capture 6</sub></td>
+  </tr>
+</table>
+
+End-to-end response time from press to fully displayed password was approximately **400 ms**.
 
 ## ⚠️ Known Issues
 
@@ -171,9 +202,10 @@ Every press produced a distinct string containing a mix of character classes, an
 
 ## 👥 Authors
 
-| Muppidi Varun | 
-
-| M Mohit Srinivasa |
+| Name | Roll number |
+|---|---|
+| Muppidi Varun | 160123735047 |
+| M Mohit Srinivasa | 160123735040 |
 
 **Supervisor:** N. Jagan Mohan Reddy, Assistant Professor, Dept. of ECE
 
