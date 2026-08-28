@@ -171,8 +171,6 @@ Every press produced a distinct string containing a mix of character classes, an
 
 ## 👥 Authors
 
-| Name | Roll No. |
-|---|---|
 | M Mohit Srinivasa |
 | Muppidi Varun | 
 
